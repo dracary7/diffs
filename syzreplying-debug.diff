@@ -1,0 +1,51 @@
+diff --git a/Makefile b/Makefile
+index 69e63e472..9b0312b58 100644
+--- a/Makefile
++++ b/Makefile
+@@ -71,11 +71,13 @@ else
+ endif
+ GITREVDATE=$(shell git log -n 1 --format="%cd" --date=format:%Y%m%d-%H%M%S)
+ 
++CFLAGS := -g -Og
+ # Don't generate symbol table and DWARF debug info.
+ # Reduces build time and binary sizes considerably.
+ # That's only needed if you use gdb or nm.
+ # If you need that, build manually without these flags.
+-GOFLAGS := "-ldflags=-s -w -X github.com/google/syzkaller/prog.GitRevision=$(REV) -X 'github.com/google/syzkaller/prog.gitRevisionDate=$(GITREVDATE)'"
++GOFLAGS := "-ldflags= -X github.com/google/syzkaller/prog.GitRevision=$(REV) -X 'github.com/google/syzkaller/prog.gitRevisionDate=$(GITREVDATE)'"
++GOFLAGS += -gcflags=all="-N -l"
+ 
+ GOHOSTFLAGS ?= $(GOFLAGS)
+ GOTARGETFLAGS ?= $(GOFLAGS)
+diff --git a/vm/qemu/qemu.go b/vm/qemu/qemu.go
+index bb616af47..60a2be99a 100644
+--- a/vm/qemu/qemu.go
++++ b/vm/qemu/qemu.go
+@@ -423,8 +423,10 @@ func (inst *instance) Close() {
+ }
+ 
+ func (inst *instance) boot() error {
+-	inst.port = vmimpl.UnusedTCPPort()
+-	inst.monport = vmimpl.UnusedTCPPort()
++	// inst.port = vmimpl.UnusedTCPPort()
++	// inst.monport = vmimpl.UnusedTCPPort()
++	inst.port = 31338
++	inst.monport = 31339
+ 	args := []string{
+ 		"-m", strconv.Itoa(inst.cfg.Mem),
+ 		"-smp", strconv.Itoa(inst.cfg.CPU),
+diff --git a/vm/vm.go b/vm/vm.go
+index fc2e0eb2c..9b5e036fb 100644
+--- a/vm/vm.go
++++ b/vm/vm.go
+@@ -424,6 +424,8 @@ var (
+ 	beforeContextDefault = 1024 << 10
+ 	afterContext         = 128 << 10
+ 
+-	tickerPeriod         = 10 * time.Second
+-	waitForOutputTimeout = 10 * time.Second
++	// tickerPeriod         = 10 * time.Second
++	// waitForOutputTimeout = 10 * time.Second
++	tickerPeriod         = 3600 * time.Second
++	waitForOutputTimeout = 3600 * time.Second
+ )
